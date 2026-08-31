@@ -4,10 +4,10 @@ import json
 from flask import Flask
 import threading
 
-# TOKEN DEL TUO BOT
-TOKEN = "8748211671:AAGZdBWiB187vtQNQHBXtDf9Lg6aS4uDAi0"
+import os
 
-CHAT_ID = ""  # verrà impostato automaticamente
+TOKEN = os.environ.get("TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
 
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 URL_BANDI = "https://www.sviluppocampania.it/bandi"
