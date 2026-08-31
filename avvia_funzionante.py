@@ -97,7 +97,15 @@ def avvia_thread():
     t = threading.Thread(target=ciclo_controllo)
     t.daemon = True
     t.start()
+@app.route("/dbtest", methods=["GET"])
+def dbtest():
+    conn = connessione_database()
 
+    if conn:
+        conn.close()
+        return "DATABASE OK - Connessione a Neon riuscita"
+
+    return "DATABASE ERRORE - Connessione a Neon fallita"
 if __name__ == "__main__":
     avvia_thread()
     app.run(host="0.0.0.0", port=10000)
