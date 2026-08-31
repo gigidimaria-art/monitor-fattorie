@@ -97,6 +97,7 @@ def avvia_thread():
     t = threading.Thread(target=ciclo_controllo)
     t.daemon = True
     t.start()
+
 @app.route("/dbtest", methods=["GET"])
 def dbtest():
     conn = connessione_database()
