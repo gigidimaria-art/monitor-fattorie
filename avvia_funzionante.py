@@ -107,6 +107,37 @@ def dbtest():
         return "DATABASE OK - Connessione a Neon riuscita"
 
     return "DATABASE ERRORE - Connessione a Neon fallita"
+
+@app.route("/dbinsert", methods=["GET"])
+def dbinsert():
+    conn = connessione_database()
+
+    if not conn:
+        return "DATABASE ERRORE - Connessione fallita"
+
+    try:
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO bandi (titolo, url, sito)
+            VALUES (%s, %s, %s)
+        """, (
+            "TEST MONITORAGGIO FATTORIE",
+            "https://www.sviluppocampania.it/bandi",
+            "TEST"
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return "OK - Record di test inserito in Neon"
+
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return f"ERRORE INSERIMENTO: {e}"
+
 if __name__ == "__main__":
     avvia_thread()
     app.run(host="0.0.0.0", port=10000)
