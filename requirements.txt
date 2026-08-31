@@ -1,22 +1,3 @@
 requests
 beautifulsoup4
 flask
-``` |
-| Render non ha ancora aggiornato il codice | Dopo il commit, torna su Render → apri il servizio → **Deploys** → clicca **Manual Deploy → Deploy latest commit** |
-
----
-
-## 🟢 **Cosa fare ora**
-1. Apri GitHub → controlla che i due file (`requirements.txt` e `avvia_funzionante.py`) siano presenti e corretti.  
-2. Se necessario, incolla di nuovo il codice Python completo.  
-3. Fai **Commit changes**.  
-4. Torna su Render → apri il servizio → **Deploys** → clicca **Manual Deploy → Deploy latest commit**.  
-5. Attendi che lo stato diventi **Live**.
-
----
-
-Quando il deploy è completato e lo stato è **Live**, scrivimi:
-
-➡️ **Passo 7 completato**
-
-Così passiamo al **Passo 8: impostare il CHAT_ID e testare il bot**.
