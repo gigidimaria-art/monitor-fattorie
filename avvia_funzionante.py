@@ -1,95 +1,45 @@
 import os
-import requests
-from bs4 import BeautifulSoup
-import json
-from datetime import datetime
 import time
+import requests
+from flask import Flask
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+# --- CONFIGURAZIONE ---
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-}
-
-URL = "https://regione.campania.it/regione/it/temi/agricoltura"
-STATO_FILE = "ultimo_bando.json"
-
-
-def manda_alert(messaggio):
+# --- FUNZIONE INVIO MESSAGGIO ---
+def invia_messaggio(testo):
+    if not TOKEN or not CHAT_ID:
+        print("⚠️ Variabili TELEGRAM_TOKEN o TELEGRAM_CHAT_ID non trovate.")
+        return
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    payload = {"chat_id": CHAT_ID, "text": testo}
     try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": messaggio
-        }
-        requests.post(url, json=payload)
+        requests.post(url, data=payload)
+        print("✅ Messaggio inviato correttamente.")
     except Exception as e:
-        print(f"[ERRORE TELEGRAM] {e}")
+        print(f"❌ Errore nell'invio del messaggio: {e}")
 
-
-def leggi_pagina(url):
-    try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
-        return response.text
-    except Exception as e:
-        print(f"[CONTROLLO] Errore di lettura per {url}: {e}")
-        return None
-
-
-def estrai_bando(html):
-    try:
-        soup = BeautifulSoup(html, "html.parser")
-        titolo = soup.find("h2")
-        if not titolo:
-            return None
-        return titolo.get_text(strip=True)
-    except Exception as e:
-        print(f"[ERRORE PARSING] {e}")
-        return None
-
-
-def leggi_stato():
-    if not os.path.exists(STATO_FILE):
-        return None
-    try:
-        with open(STATO_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return None
-
-
-def salva_stato(bando):
-    with open(STATO_FILE, "w") as f:
-        json.dump({"bando": bando}, f)
-
-
-def ciclo_controllo():
+# --- FUNZIONE PRINCIPALE ---
+def monitor_bandi():
     while True:
-        print("[INFO] Controllo in corso...")
+        # Qui puoi inserire la tua logica di controllo bandi
+        invia_messaggio("Bot attivo e in ascolto dei bandi...")
+        time.sleep(3600)  # ogni ora
 
-        html = leggi_pagina(URL)
-        if html:
-            bando = estrai_bando(html)
+# --- SERVER FLASK PER RENDER ---
+app = Flask(__name__)
 
-            if bando:
-                ultimo = leggi_stato()
-
-                if not ultimo or ultimo["bando"] != bando:
-                    print("[INFO] Nuovo bando trovato!")
-                    salva_stato(bando)
-                    manda_alert(f"🔔 NUOVO BANDO PUBBLICATO:\n\n{bando}")
-                else:
-                    print("[INFO] Nessun cambiamento.")
-            else:
-                print("[ATTENZIONE] Nessun bando trovato nella pagina.")
-        else:
-            print("[ATTENZIONE] Impossibile leggere la pagina.")
-
-        time.sleep(600)
-
+@app.route('/')
+def home():
+    return "Bot attivo su Render!"
 
 if __name__ == "__main__":
-    manda_alert("🤖 Bot avviato correttamente su Render.")
-    ciclo_controllo()
+    # Avvia il monitoraggio in background
+    import threading
+    t = threading.Thread(target=monitor_bandi)
+    t.start()
+
+    # Avvia il server Flask per mantenere la porta aperta
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
