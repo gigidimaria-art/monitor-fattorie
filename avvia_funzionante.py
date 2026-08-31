@@ -4,8 +4,10 @@ import json
 from flask import Flask
 import threading
 
-TOKEN = 8748211671:AAGZdBWiB187vtQNQHBXtDf9Lg6aS4uDAi0
-CHAT_ID = ""  # verrà riempito automaticamente al primo messaggio
+# TOKEN DEL TUO BOT — CORRETTO E TRA VIRGOLETTE
+TOKEN = "8748211671:AAGZdBWiB187vtQNQHBXtDf9Lg6aS4uDAi0"
+
+CHAT_ID = ""  # verrà impostato automaticamente al primo messaggio
 
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 URL_BANDI = "https://www.sviluppocampania.it/bandi"
@@ -30,10 +32,7 @@ def estrai_bando():
         if r.status_code != 200:
             return None
 
-        # Cerca un titolo di bando nella pagina
         testo = r.text.lower()
-
-        # Qui puoi migliorare la ricerca, ma per ora cerchiamo parole chiave
         parole_chiave = ["bando", "avviso", "misura", "srd", "psr", "agricolo"]
 
         for parola in parole_chiave:
@@ -69,22 +68,4 @@ def ciclo_controllo():
 
         time.sleep(60)
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Bot attivo"
-
-@app.route("/setchat/<cid>", methods=["GET"])
-def set_chat(cid):
-    global CHAT_ID
-    CHAT_ID = cid
-    return f"CHAT_ID impostato a {cid}"
-
-def avvia_thread():
-    t = threading.Thread(target=ciclo_controllo)
-    t.daemon = True
-    t.start()
-
-if __name__ == "__main__":
-    avvia_thread()
-    app.run(host="0.0.0.0", port=10000)
-
+@app.route("/", methods
