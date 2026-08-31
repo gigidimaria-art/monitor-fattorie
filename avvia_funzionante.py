@@ -163,7 +163,6 @@ def testbandi():
         )
 
     return risposta
-
 @app.route("/dbtest", methods=["GET"])
 def dbtest():
     conn = connessione_database()
