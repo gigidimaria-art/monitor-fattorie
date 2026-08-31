@@ -11,6 +11,7 @@ TOKEN = os.environ.get("TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+
 def connessione_database():
     try:
         conn = psycopg2.connect(DATABASE_URL)
@@ -19,14 +20,17 @@ def connessione_database():
         print("Errore connessione database:", e)
         return None
 
+
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 URL_BANDI = "https://www.sviluppocampania.it/bandi"
 
 app = Flask(__name__)
 
+
 def salva_ultimo_bando(titolo):
     with open("ultimo_bando.json", "w") as f:
         json.dump({"titolo": titolo}, f)
+
 
 def leggi_ultimo_bando():
     try:
@@ -36,14 +40,24 @@ def leggi_ultimo_bando():
     except:
         return ""
 
+
 def estrai_bando():
     try:
         r = requests.get(URL_BANDI, timeout=10)
+
         if r.status_code != 200:
             return None
 
         testo = r.text.lower()
-        parole_chiave = ["bando", "avviso", "misura", "srd", "psr", "agricolo"]
+
+        parole_chiave = [
+            "bando",
+            "avviso",
+            "misura",
+            "srd",
+            "psr",
+            "agricolo"
+        ]
 
         for parola in parole_chiave:
             if parola in testo:
@@ -55,67 +69,156 @@ def estrai_bando():
         print("Errore estrazione:", e)
         return None
 
+
+def estrai_bandi_pagina(url):
+    try:
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        risultati = []
+
+        # Cerca i titoli degli articoli
+        titoli = soup.find_all("h2")
+
+        for h2 in titoli:
+
+            link = h2.find("a")
+
+            if not link:
+                continue
+
+            titolo = link.get_text(" ", strip=True)
+            url_bando = link.get("href")
+
+            if not titolo or not url_bando:
+                continue
+
+            # Cerca il contenitore dell'articolo
+            articolo = h2.find_parent("article")
+
+            descrizione = ""
+
+            if articolo:
+                descrizione = articolo.get_text(
+                    " ",
+                    strip=True
+                )
+
+            risultati.append({
+                "titolo": titolo,
+                "url": url_bando,
+                "descrizione": descrizione
+            })
+
+        return risultati
+
+    except Exception as e:
+        print("Errore estrazione bandi:", e)
+        return []
+
+
 def invia_messaggio(msg):
     global CHAT_ID
+
     if CHAT_ID == "":
         print("CHAT_ID non impostato.")
         return
 
     try:
-        requests.post(URL_TELEGRAM, data={"chat_id": CHAT_ID, "text": msg})
+        requests.post(
+            URL_TELEGRAM,
+            data={
+                "chat_id": CHAT_ID,
+                "text": msg
+            }
+        )
+
     except Exception as e:
         print("Errore invio messaggio:", e)
 
+
 def ciclo_controllo():
+
     while True:
+
         print("Controllo nuovi bandi...")
+
         nuovo = estrai_bando()
         ultimo = leggi_ultimo_bando()
 
         if nuovo and nuovo != ultimo:
+
             salva_ultimo_bando(nuovo)
-            invia_messaggio(f"🔔 Nuovo bando rilevato!\n\n{nuovo}")
+
+            invia_messaggio(
+                f"🔔 Nuovo bando rilevato!\n\n{nuovo}"
+            )
 
         time.sleep(60)
+
 
 @app.route("/", methods=["GET"])
 def home():
     return "Bot attivo"
 
+
 @app.route("/setchat/<cid>", methods=["GET"])
 def set_chat(cid):
+
     global CHAT_ID
+
     CHAT_ID = cid
+
     return f"CHAT_ID impostato a {cid}"
+
 
 @app.route("/test", methods=["GET"])
 def test():
-    invia_messaggio("🔧 Test eseguito: il bot sta funzionando correttamente!")
+
+    invia_messaggio(
+        "🔧 Test eseguito: il bot sta funzionando correttamente!"
+    )
+
     return "Messaggio di test inviato."
 
+
 def avvia_thread():
-    t = threading.Thread(target=ciclo_controllo)
+
+    t = threading.Thread(
+        target=ciclo_controllo
+    )
+
     t.daemon = True
     t.start()
 
+
 @app.route("/dbtest", methods=["GET"])
 def dbtest():
+
     conn = connessione_database()
 
     if conn:
         conn.close()
+
         return "DATABASE OK - Connessione a Neon riuscita"
 
     return "DATABASE ERRORE - Connessione a Neon fallita"
 
+
 @app.route("/dbinsert", methods=["GET"])
 def dbinsert():
+
     conn = connessione_database()
 
     if not conn:
         return "DATABASE ERRORE - Connessione fallita"
 
     try:
+
         cur = conn.cursor()
 
         cur.execute("""
@@ -128,16 +231,25 @@ def dbinsert():
         ))
 
         conn.commit()
+
         cur.close()
         conn.close()
 
         return "OK - Record di test inserito in Neon"
 
     except Exception as e:
+
         conn.rollback()
         conn.close()
+
         return f"ERRORE INSERIMENTO: {e}"
 
+
 if __name__ == "__main__":
+
     avvia_thread()
-    app.run(host="0.0.0.0", port=10000)
+
+    app.run(
+        host="0.0.0.0",
+        port=10000
+    )
