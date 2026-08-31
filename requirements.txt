@@ -1,3 +1,4 @@
 requests
 beautifulsoup4
 flask
+psycopg2-binary
