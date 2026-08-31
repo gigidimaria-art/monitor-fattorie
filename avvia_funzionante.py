@@ -68,4 +68,21 @@ def ciclo_controllo():
 
         time.sleep(60)
 
-@app.route("/", methods
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot attivo"
+
+@app.route("/setchat/<cid>", methods=["GET"])
+def set_chat(cid):
+    global CHAT_ID
+    CHAT_ID = cid
+    return f"CHAT_ID impostato a {cid}"
+
+def avvia_thread():
+    t = threading.Thread(target=ciclo_controllo)
+    t.daemon = True
+    t.start()
+
+if __name__ == "__main__":
+    avvia_thread()
+    app.run(host="0.0.0.0", port=10000)
