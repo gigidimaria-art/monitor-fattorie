@@ -5,9 +5,19 @@ from flask import Flask
 import threading
 
 import os
+import psycopg2
 
 TOKEN = os.environ.get("TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+def connessione_database():
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    except Exception as e:
+        print("Errore connessione database:", e)
+        return None
 
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 URL_BANDI = "https://www.sviluppocampania.it/bandi"
