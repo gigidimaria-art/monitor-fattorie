@@ -55,6 +55,53 @@ def estrai_bando():
         print("Errore estrazione:", e)
         return None
 
+def estrai_bandi_pagina(url):
+    try:
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        risultati = []
+
+        # Cerca i titoli degli articoli presenti nella pagina
+        titoli = soup.find_all("h2")
+
+        for h2 in titoli:
+            link = h2.find("a")
+
+            if not link:
+                continue
+
+            titolo = link.get_text(" ", strip=True)
+            url_bando = link.get("href")
+
+            if not titolo or not url_bando:
+                continue
+
+            # Cerca il contenitore dell'articolo
+            articolo = h2.find_parent("article")
+
+            descrizione = ""
+
+            if articolo:
+                testo = articolo.get_text(" ", strip=True)
+                descrizione = testo
+
+            risultati.append({
+                "titolo": titolo,
+                "url": url_bando,
+                "descrizione": descrizione
+            })
+
+        return risultati
+
+    except Exception as e:
+        print("Errore estrazione bandi:", e)
+        return []
+
 def invia_messaggio(msg):
     global CHAT_ID
     if CHAT_ID == "":
