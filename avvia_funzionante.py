@@ -4,7 +4,7 @@ import json
 from flask import Flask
 import threading
 
-TOKEN = 8921655667:AAEYvdzduOQrl6FAt0FLyBk70NwQzZqSN58
+TOKEN = 8748211671:AAGZdBWiB187vtQNQHBXtDf9Lg6aS4uDAi0
 CHAT_ID = ""  # verrà riempito automaticamente al primo messaggio
 
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
