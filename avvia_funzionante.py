@@ -4,10 +4,10 @@ import json
 from flask import Flask
 import threading
 
-# TOKEN DEL TUO BOT — CORRETTO E TRA VIRGOLETTE
+# TOKEN DEL TUO BOT
 TOKEN = "8748211671:AAGZdBWiB187vtQNQHBXtDf9Lg6aS4uDAi0"
 
-CHAT_ID = ""  # verrà impostato automaticamente al primo messaggio
+CHAT_ID = ""  # verrà impostato automaticamente
 
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 URL_BANDI = "https://www.sviluppocampania.it/bandi"
@@ -48,7 +48,7 @@ def estrai_bando():
 def invia_messaggio(msg):
     global CHAT_ID
     if CHAT_ID == "":
-        print("CHAT_ID non impostato, messaggio non inviato.")
+        print("CHAT_ID non impostato.")
         return
 
     try:
@@ -77,6 +77,11 @@ def set_chat(cid):
     global CHAT_ID
     CHAT_ID = cid
     return f"CHAT_ID impostato a {cid}"
+
+@app.route("/test", methods=["GET"])
+def test():
+    invia_messaggio("🔧 Test eseguito: il bot sta funzionando correttamente!")
+    return "Messaggio di test inviato."
 
 def avvia_thread():
     t = threading.Thread(target=ciclo_controllo)
