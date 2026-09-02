@@ -60,34 +60,32 @@ def estrai_bandi_pagina(url):
         r.raise_for_status()
 
         from bs4 import BeautifulSoup
+        from urllib.parse import urljoin
 
         soup = BeautifulSoup(r.text, "html.parser")
 
         risultati = []
 
-        # Cerca i titoli degli articoli presenti nella pagina
-        titoli = soup.find_all("h2")
+        for riga in soup.find_all("tr"):
+            celle = riga.find_all(["td", "th"])
 
-        for h2 in titoli:
-            link = h2.find("a")
+            if len(celle) < 2:
+                continue
+
+            titolo = celle[0].get_text(" ", strip=True)
+            scadenza = celle[1].get_text(" ", strip=True)
+
+            link = riga.find("a", href=True)
 
             if not link:
                 continue
 
-            titolo = link.get_text(" ", strip=True)
-            url_bando = link.get("href")
+            url_bando = urljoin(url, link["href"])
 
-            if not titolo or not url_bando:
+            if not titolo:
                 continue
 
-            # Cerca il contenitore dell'articolo
-            articolo = h2.find_parent("article")
-
-            descrizione = ""
-
-            if articolo:
-                testo = articolo.get_text(" ", strip=True)
-                descrizione = testo
+            descrizione = f"{titolo} {scadenza}".strip()
 
             risultati.append({
                 "titolo": titolo,
