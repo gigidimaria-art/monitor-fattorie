@@ -252,13 +252,17 @@ def verifica_integrita_fonte():
 
     try:
 
-        response = requests.get(
-            URL_BANDI,
-            timeout=15,
-            headers={
-                "User-Agent": "Mozilla/5.0 Monitoraggio-Bandi-Campania"
-            }
-        )
+       print("DEBUG 1 - prima della richiesta al sito")
+
+response = requests.get(
+    URL_BANDI,
+    timeout=15,
+    headers={
+        "User-Agent": "Mozilla/5.0 Monitoraggio-Bandi-Campania"
+    }
+)
+
+print(f"DEBUG 2 - risposta ricevuta: HTTP {response.status_code}")
 
         if response.status_code != 200:
 
