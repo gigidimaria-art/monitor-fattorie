@@ -41,6 +41,62 @@ def connessione_database():
         print("Errore connessione database:", e)
         return None
 
+def connessione_database():
+    try:
+        if not DATABASE_URL:
+            print("DATABASE_URL non configurata")
+            return None
+
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+
+    except Exception as e:
+        print("Errore connessione database:", e)
+        return None
+
+
+def inizializza_database():
+
+    conn = connessione_database()
+
+    if not conn:
+        return False
+
+    try:
+
+        cur = conn.cursor()
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS bandi_monitoraggio (
+                id SERIAL PRIMARY KEY,
+                titolo TEXT NOT NULL,
+                url TEXT NOT NULL UNIQUE,
+                descrizione TEXT,
+                impronta TEXT NOT NULL,
+                prima_rilevazione TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ultima_verifica TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        print("✅ Database monitoraggio inizializzato")
+
+        return True
+
+    except Exception as e:
+
+        print("Errore inizializzazione database:", e)
+
+        try:
+            conn.rollback()
+            conn.close()
+        except Exception:
+            pass
+
+        return False
 
 # ============================================================
 # ESTRAZIONE BANDI
