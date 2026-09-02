@@ -194,6 +194,18 @@ def bando_rilevante(bando):
 
     return False
 
+def bando_rilevante(bando):
+    ...
+    return False
+
+
+def verifica_integrita_fonte():
+    ...
+    
+
+def invia_messaggio(msg):
+    ...
+
 def invia_messaggio(msg):
     global CHAT_ID
     if CHAT_ID == "":
