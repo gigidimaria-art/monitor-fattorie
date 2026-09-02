@@ -41,20 +41,6 @@ def connessione_database():
         print("Errore connessione database:", e)
         return None
 
-def connessione_database():
-    try:
-        if not DATABASE_URL:
-            print("DATABASE_URL non configurata")
-            return None
-
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-
-    except Exception as e:
-        print("Errore connessione database:", e)
-        return None
-
-
 def inizializza_database():
 
     conn = connessione_database()
