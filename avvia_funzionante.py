@@ -726,7 +726,7 @@ def verifica_fonte():
 # ============================================================
 
 if __name__ == "__main__":
-
+inizializza_database()
     # Avvia il controllo automatico in background
     thread_monitor = threading.Thread(
         target=ciclo_controllo,
