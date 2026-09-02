@@ -256,31 +256,14 @@ def testbandi():
         if not elementi:
             return "SRD03 NON TROVATO"
 
-        risposta = ""
+        elemento = elementi[0]
+        contenitore = elemento.parent
 
-        for elemento in elementi:
-            corrente = elemento.parent
+        for livello in range(5):
+            if contenitore.parent:
+                contenitore = contenitore.parent
 
-            # Risali fino a trovare un link
-            link = corrente.find_parent("a")
-
-            if link:
-                risposta += (
-                    f"TAG TESTO: {corrente.name}\n"
-                    f"TESTO: {corrente.get_text(' ', strip=True)}\n"
-                    f"LINK: {link.get('href')}\n"
-                    f"HTML LINK: {str(link)}\n"
-                    f"========================================\n"
-                )
-            else:
-                risposta += (
-                    f"TAG TESTO: {corrente.name}\n"
-                    f"TESTO: {corrente.get_text(' ', strip=True)}\n"
-                    f"LINK: NESSUNO\n"
-                    f"========================================\n"
-                )
-
-        return risposta
+        return str(contenitore)
 
     except Exception as e:
         return f"ERRORE: {e}"
