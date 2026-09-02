@@ -242,22 +242,30 @@ def avvia_thread():
 
 @app.route("/testbandi", methods=["GET"])
 def testbandi():
-    risultati = estrai_bandi_pagina(URL_BANDI)
+    try:
+        r = requests.get(URL_BANDI, timeout=15)
+        r.raise_for_status()
 
-    if not risultati:
-        return "NESSUN BANDO TROVATO"
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(r.text, "html.parser")
 
-    risposta = f"NUMERO BANDI ESTRATTI: {len(risultati)}\n\n"
+        testo_pagina = soup.get_text(" ", strip=True)
 
-    for bando in risultati:
-        risposta += (
-            f"Titolo: {bando['titolo']}\n"
-            f"URL: {bando['url']}\n"
-            f"Descrizione: {bando['descrizione']}\n"
-            f"========================================\n"
+        if "Intervento SRD03 Azione C" in testo_pagina:
+            risultato_srd03 = "SI"
+        else:
+            risultato_srd03 = "NO"
+
+        return (
+            f"SRD03 PRESENTE NELLA PAGINA: {risultato_srd03}\n"
+            f"NUMERO H1: {len(soup.find_all('h1'))}\n"
+            f"NUMERO H2: {len(soup.find_all('h2'))}\n"
+            f"NUMERO H3: {len(soup.find_all('h3'))}\n"
+            f"NUMERO LINK: {len(soup.find_all('a'))}\n"
         )
 
-    return risposta
+    except Exception as e:
+        return f"ERRORE: {e}"
 
 
 @app.route("/dbtest", methods=["GET"])
