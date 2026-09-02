@@ -242,27 +242,24 @@ def avvia_thread():
 
 @app.route("/testbandi", methods=["GET"])
 def testbandi():
+    @app.route("/testbandi", methods=["GET"])
+def testbandi():
     risultati = estrai_bandi_pagina(URL_BANDI)
 
     if not risultati:
         return "NESSUN BANDO TROVATO"
 
-    risultati_filtrati = [
-        bando for bando in risultati
-        if bando_rilevante(bando)
-    ]
-
-    if not risultati_filtrati:
-        return "NESSUN BANDO RILEVANTE TROVATO"
-
     risposta = ""
 
-    for bando in risultati_filtrati:
+    for bando in risultati[:20]:
+        rilevante = bando_rilevante(bando)
+
         risposta += (
+            f"RILEVANTE: {'SI' if rilevante else 'NO'}\n"
             f"Titolo: {bando['titolo']}\n"
             f"URL: {bando['url']}\n"
             f"Descrizione: {bando['descrizione']}\n"
-            f"---\n"
+            f"========================================\n"
         )
 
     return risposta
