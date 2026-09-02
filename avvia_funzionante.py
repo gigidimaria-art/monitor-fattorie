@@ -1,137 +1,164 @@
-import requests
-import time
-import json
-from flask import Flask
-import threading
-
 import os
+import time
+import threading
+from urllib.parse import urljoin, urlparse
+
+import requests
 import psycopg2
+from flask import Flask, jsonify
+from bs4 import BeautifulSoup
+
+
+# ============================================================
+# CONFIGURAZIONE
+# ============================================================
 
 TOKEN = os.environ.get("TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-
-def connessione_database():
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-    except Exception as e:
-        print("Errore connessione database:", e)
-        return None
-
-
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+
 URL_BANDI = "https://agricoltura.regione.campania.it/bandi.html"
 
 app = Flask(__name__)
 
 
-def salva_ultimo_bando(titolo):
-    with open("ultimo_bando.json", "w") as f:
-        json.dump({"titolo": titolo}, f)
+# ============================================================
+# DATABASE
+# ============================================================
 
-
-def leggi_ultimo_bando():
+def connessione_database():
     try:
-        with open("ultimo_bando.json", "r") as f:
-            data = json.load(f)
-            return data.get("titolo", "")
-    except:
-        return ""
-
-
-def estrai_bando():
-    try:
-        r = requests.get(URL_BANDI, timeout=10)
-
-        if r.status_code != 200:
+        if not DATABASE_URL:
+            print("DATABASE_URL non configurata")
             return None
 
-        testo = r.text.lower()
-
-        parole_chiave = [
-            "bando",
-            "avviso",
-            "misura",
-            "srd",
-            "psr",
-            "agricolo"
-        ]
-
-        for parola in parole_chiave:
-            if parola in testo:
-                return f"Trovato riferimento a: {parola.upper()}"
-
-        return None
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
 
     except Exception as e:
-        print("Errore estrazione:", e)
+        print("Errore connessione database:", e)
         return None
 
 
+# ============================================================
+# ESTRAZIONE BANDI
+# ============================================================
+
 def estrai_bandi_pagina(url):
+
     try:
-        r = requests.get(url, timeout=15)
+
+        r = requests.get(
+            url,
+            timeout=15,
+            headers={
+                "User-Agent": "Mozilla/5.0 Monitoraggio-Bandi-Campania"
+            }
+        )
+
         r.raise_for_status()
 
-        from bs4 import BeautifulSoup
-        from urllib.parse import urljoin
-
-        soup = BeautifulSoup(r.text, "html.parser")
+        soup = BeautifulSoup(
+            r.text,
+            "html.parser"
+        )
 
         risultati = []
 
         for riga in soup.find_all("tr"):
 
-            celle = riga.find_all(["td", "th"])
+            celle = riga.find_all(
+                ["td", "th"]
+            )
 
             if len(celle) < 2:
                 continue
 
-            titolo = celle[0].get_text(" ", strip=True)
-            scadenza = celle[1].get_text(" ", strip=True)
+            titolo = celle[0].get_text(
+                " ",
+                strip=True
+            )
 
-            link = riga.find("a", href=True)
+            scadenza = celle[1].get_text(
+                " ",
+                strip=True
+            )
+
+            link = riga.find(
+                "a",
+                href=True
+            )
 
             if not link:
                 continue
 
-            url_bando = urljoin(url, link["href"])
+            url_bando = urljoin(
+                url,
+                link["href"]
+            )
 
             if not titolo:
                 continue
 
-            descrizione = f"{titolo} {scadenza}".strip()
+            descrizione = (
+                f"{titolo} {scadenza}"
+            ).strip()
 
-            risultati.append({
-                "titolo": titolo,
-                "url": url_bando,
-                "descrizione": descrizione
-            })
+            risultati.append(
+                {
+                    "titolo": titolo,
+                    "url": url_bando,
+                    "descrizione": descrizione
+                }
+            )
 
         return risultati
 
     except Exception as e:
-        print("Errore estrazione bandi:", e)
+
+        print(
+            "Errore estrazione bandi:",
+            e
+        )
+
         return []
 
 
+# ============================================================
+# FILTRO BANDI RILEVANTI
+# ============================================================
+
 def bando_rilevante(bando):
 
-    titolo = bando.get("titolo", "")
-    descrizione = bando.get("descrizione", "")
+    titolo = bando.get(
+        "titolo",
+        ""
+    )
 
-    testo = f"{titolo} {descrizione}".lower()
+    descrizione = bando.get(
+        "descrizione",
+        ""
+    )
 
-    # Normalizza trattini, slash e spazi
-    testo = testo.replace("-", " ")
-    testo = testo.replace("/", " ")
-    testo = " ".join(testo.split())
+    testo = (
+        f"{titolo} {descrizione}"
+    ).lower()
 
-    # =========================================================
-    # 1. CRITERI DIRETTI: sempre rilevanti
-    # =========================================================
+    testo = testo.replace(
+        "-",
+        " "
+    )
+
+    testo = testo.replace(
+        "/",
+        " "
+    )
+
+    testo = " ".join(
+        testo.split()
+    )
 
     if "fattoria didattica" in testo:
         return True
@@ -139,14 +166,11 @@ def bando_rilevante(bando):
     if "fattorie didattiche" in testo:
         return True
 
-    # SRD03 + Azione C
-    # I due termini possono essere anche non consecutivi
-    if "srd03" in testo and "azione c" in testo:
+    if (
+        "srd03" in testo
+        and "azione c" in testo
+    ):
         return True
-
-    # =========================================================
-    # 2. AZIENDA/AGRICOLTURA + ATTIVITÀ DIDATTICHE/EDUCATIVE
-    # =========================================================
 
     termini_base_didattica = [
         "agricoltura",
@@ -182,19 +206,20 @@ def bando_rilevante(bando):
     ]
 
     contiene_base = any(
-        termine in testo for termine in termini_base_didattica
+        termine in testo
+        for termine in termini_base_didattica
     )
 
     contiene_didattica = any(
-        termine in testo for termine in termini_didattici
+        termine in testo
+        for termine in termini_didattici
     )
 
-    if contiene_base and contiene_didattica:
+    if (
+        contiene_base
+        and contiene_didattica
+    ):
         return True
-
-    # =========================================================
-    # 3. AZIENDE AGRICOLE + SVILUPPO DELLE AREE RURALI
-    # =========================================================
 
     if (
         "aziende agricole" in testo
@@ -207,10 +232,6 @@ def bando_rilevante(bando):
         and "sviluppo delle aree rurali" in testo
     ):
         return True
-
-    # =========================================================
-    # 4. AZIENDA AGRICOLA + FATTORIA
-    # =========================================================
 
     if (
         "azienda agricola" in testo
@@ -227,20 +248,11 @@ def bando_rilevante(bando):
     return False
 
 
-def verifica_integrita_fonte():
-    """
-    Controllo automatico della fonte ufficiale.
+# ============================================================
+# VERIFICA INTEGRITÀ FONTE UFFICIALE
+# ============================================================
 
-    Verifica:
-    1. raggiungibilità del sito
-    2. risposta HTTP
-    3. contenuto HTML sufficiente
-    4. presenza di parole indicative
-    5. corretta estrazione dei bandi
-    6. presenza di titoli e URL
-    7. URL appartenenti al dominio ufficiale
-    8. presenza di SRD03 + Azione C
-    """
+def verifica_integrita_fonte():
 
     risultato = {
         "ok": False,
@@ -252,17 +264,32 @@ def verifica_integrita_fonte():
 
     try:
 
-       print("DEBUG 1 - prima della richiesta al sito")
+        # ----------------------------------------------------
+        # DEBUG 1 / DEBUG 2
+        # ----------------------------------------------------
 
-response = requests.get(
-    URL_BANDI,
-    timeout=15,
-    headers={
-        "User-Agent": "Mozilla/5.0 Monitoraggio-Bandi-Campania"
-    }
-)
+        print(
+            "DEBUG 1 - prima della richiesta al sito"
+        )
 
-print(f"DEBUG 2 - risposta ricevuta: HTTP {response.status_code}")
+        response = requests.get(
+            URL_BANDI,
+            timeout=15,
+            headers={
+                "User-Agent":
+                    "Mozilla/5.0 "
+                    "Monitoraggio-Bandi-Campania"
+            }
+        )
+
+        print(
+            f"DEBUG 2 - risposta ricevuta: "
+            f"HTTP {response.status_code}"
+        )
+
+        # ----------------------------------------------------
+        # CONTROLLO HTTP
+        # ----------------------------------------------------
 
         if response.status_code != 200:
 
@@ -272,11 +299,19 @@ print(f"DEBUG 2 - risposta ricevuta: HTTP {response.status_code}")
 
             return risultato
 
+        # ----------------------------------------------------
+        # CONTROLLO DIMENSIONE HTML
+        # ----------------------------------------------------
+
         if len(response.text) < 5000:
 
             risultato["anomalie"].append(
                 "Pagina HTML insolitamente piccola"
             )
+
+        # ----------------------------------------------------
+        # CONTROLLO CONTENUTO
+        # ----------------------------------------------------
 
         testo = response.text.lower()
 
@@ -296,16 +331,30 @@ print(f"DEBUG 2 - risposta ricevuta: HTTP {response.status_code}")
         if len(parole_presenti) < 2:
 
             risultato["anomalie"].append(
-                "Il contenuto della pagina non presenta sufficienti elementi attesi"
+                "Il contenuto della pagina non presenta "
+                "sufficienti elementi attesi"
             )
 
-       print("DEBUG 3 - prima dell'estrazione dei bandi")
+        # ----------------------------------------------------
+        # DEBUG 3 / DEBUG 4
+        # ----------------------------------------------------
 
-bandi = estrai_bandi_pagina(URL_BANDI)
+        print(
+            "DEBUG 3 - prima dell'estrazione dei bandi"
+        )
 
-print(f"DEBUG 4 - bandi estratti: {len(bandi)}")
+        bandi = estrai_bandi_pagina(
+            URL_BANDI
+        )
 
-risultato["numero_bandi"] = len(bandi)
+        print(
+            f"DEBUG 4 - bandi estratti: "
+            f"{len(bandi)}"
+        )
+
+        risultato["numero_bandi"] = len(
+            bandi
+        )
 
         if not bandi:
 
@@ -315,14 +364,25 @@ risultato["numero_bandi"] = len(bandi)
 
             return risultato
 
-        dominio_ufficiale = "agricoltura.regione.campania.it"
+        # ----------------------------------------------------
+        # CONTROLLO URL
+        # ----------------------------------------------------
 
-        from urllib.parse import urlparse
+        dominio_ufficiale = (
+            "agricoltura.regione.campania.it"
+        )
 
         for bando in bandi:
 
-            titolo = bando.get("titolo", "").strip()
-            url = bando.get("url", "").strip()
+            titolo = bando.get(
+                "titolo",
+                ""
+            ).strip()
+
+            url = bando.get(
+                "url",
+                ""
+            ).strip()
 
             if not titolo:
 
@@ -339,44 +399,75 @@ risultato["numero_bandi"] = len(bandi)
                 continue
 
             parsed = urlparse(url)
+
             dominio = parsed.netloc.lower()
 
             if dominio != dominio_ufficiale:
 
-                risultato["url_non_ufficiali"].append(url)
+                risultato[
+                    "url_non_ufficiali"
+                ].append(url)
 
-        if risultato["url_non_ufficiali"]:
+        if risultato[
+            "url_non_ufficiali"
+        ]:
 
             risultato["anomalie"].append(
-                "Sono stati trovati URL non appartenenti al dominio ufficiale"
+                "Sono stati trovati URL non appartenenti "
+                "al dominio ufficiale"
             )
+
+        # ----------------------------------------------------
+        # RICERCA SRD03 AZIONE C
+        # ----------------------------------------------------
 
         for bando in bandi:
 
-            titolo = bando.get("titolo", "")
-            descrizione = bando.get("descrizione", "")
+            titolo = bando.get(
+                "titolo",
+                ""
+            )
+
+            descrizione = bando.get(
+                "descrizione",
+                ""
+            )
 
             testo_bando = (
                 f"{titolo} {descrizione}"
             ).lower()
 
-            testo_bando = testo_bando.replace("-", " ")
-            testo_bando = " ".join(testo_bando.split())
+            testo_bando = testo_bando.replace(
+                "-",
+                " "
+            )
+
+            testo_bando = " ".join(
+                testo_bando.split()
+            )
 
             if (
                 "srd03" in testo_bando
                 and "azione c" in testo_bando
             ):
 
-                risultato["srd03_trovato"] = True
+                risultato[
+                    "srd03_trovato"
+                ] = True
 
                 break
 
-        if not risultato["srd03_trovato"]:
+        if not risultato[
+            "srd03_trovato"
+        ]:
 
             risultato["anomalie"].append(
                 "SRD03 - Azione C non trovato nella fonte"
             )
+
+        # ----------------------------------------------------
+        # RISULTATO FINALE
+        # ----------------------------------------------------
 
         if not risultato["anomalie"]:
 
@@ -393,42 +484,88 @@ risultato["numero_bandi"] = len(bandi)
         return risultato
 
 
-def invia_messaggio(msg):
+# ============================================================
+# TELEGRAM
+# ============================================================
 
-    global CHAT_ID
-
-    if CHAT_ID == "":
-        print("CHAT_ID non impostato.")
-        return
+def invia_messaggio(testo):
 
     try:
 
-        requests.post(
+        if not TOKEN or not CHAT_ID:
+
+            print(
+                "TOKEN o CHAT_ID non configurati"
+            )
+
+            return False
+
+        response = requests.post(
             URL_TELEGRAM,
             data={
                 "chat_id": CHAT_ID,
-                "text": msg
-            }
+                "text": testo
+            },
+            timeout=15
         )
+
+        print(
+            "Telegram HTTP:",
+            response.status_code
+        )
+
+        if response.status_code == 200:
+
+            print(
+                "Messaggio Telegram inviato"
+            )
+
+            return True
+
+        print(
+            "Errore Telegram:",
+            response.text
+        )
+
+        return False
 
     except Exception as e:
 
-        print("Errore invio messaggio:", e)
+        print(
+            "Errore invio Telegram:",
+            e
+        )
 
+        return False
+
+
+# ============================================================
+# CICLO AUTOMATICO
+# ============================================================
 
 def ciclo_controllo():
 
     while True:
 
-        print("========================================")
-        print("CONTROLLO AUTOMATICO FONTE UFFICIALE")
-        print("========================================")
+        print(
+            "========================================"
+        )
+
+        print(
+            "CONTROLLO AUTOMATICO FONTE UFFICIALE"
+        )
+
+        print(
+            "========================================"
+        )
 
         controllo = verifica_integrita_fonte()
 
         if controllo["ok"]:
 
-            print("✅ FONTE OK")
+            print(
+                "✅ FONTE OK"
+            )
 
             print(
                 f"✅ Bandi estratti: "
@@ -442,183 +579,129 @@ def ciclo_controllo():
 
         else:
 
-            print("🔴 ANOMALIA FONTE")
+            print(
+                "🔴 ANOMALIA FONTE"
+            )
 
-            for anomalia in controllo["anomalie"]:
+            for anomalia in controllo[
+                "anomalie"
+            ]:
 
                 print(
                     f"   ⚠️ {anomalia}"
                 )
 
-            if controllo["url_non_ufficiali"]:
+            if controllo[
+                "url_non_ufficiali"
+            ]:
 
-                print("   URL non ufficiali:")
+                print(
+                    "   URL non ufficiali:"
+                )
 
-                for url in controllo["url_non_ufficiali"]:
+                for url in controllo[
+                    "url_non_ufficiali"
+                ]:
 
                     print(
                         f"      {url}"
                     )
 
+        print(
+            "Attesa 60 secondi..."
+        )
+
         time.sleep(60)
 
 
-@app.route("/", methods=["GET"])
+# ============================================================
+# ROUTE PRINCIPALE
+# ============================================================
+
+@app.route("/")
 def home():
 
-    return "Bot attivo"
-
-
-@app.route("/setchat/<cid>", methods=["GET"])
-def set_chat(cid):
-
-    global CHAT_ID
-
-    CHAT_ID = cid
-
-    return f"CHAT_ID impostato a {cid}"
-
-
-@app.route("/test", methods=["GET"])
-def test():
-
-    invia_messaggio(
-        "🔧 Test eseguito: il bot sta funzionando correttamente!"
+    return jsonify(
+        {
+            "status": "online",
+            "servizio": "Monitoraggio Bandi Campania"
+        }
     )
 
-    return "Messaggio di test inviato."
 
+# ============================================================
+# ROUTE TEST BANDI
+# ============================================================
 
-def avvia_thread():
-
-    t = threading.Thread(
-        target=ciclo_controllo
-    )
-
-    t.daemon = True
-
-    t.start()
-
-
-@app.route("/testbandi", methods=["GET"])
-def testbandi():
+@app.route("/testbandi")
+def test_bandi():
 
     try:
 
-        bandi = estrai_bandi_pagina(URL_BANDI)
-
-        if not bandi:
-
-            return "NESSUN BANDO TROVATO"
-
-        risultato = (
-            "RISULTATO FILTRO DI RILEVANZA"
-            "<br><br>"
+        bandi = estrai_bandi_pagina(
+            URL_BANDI
         )
 
-        for i, bando in enumerate(
-            bandi,
-            start=1
-        ):
+        rilevanti = [
+            bando
+            for bando in bandi
+            if bando_rilevante(bando)
+        ]
 
-            rilevante = bando_rilevante(bando)
-
-            if rilevante:
-
-                stato = "✅ RILEVANTE"
-
-            else:
-
-                stato = "❌ NON RILEVANTE"
-
-            risultato += (
-
-                f"{i}. {stato}<br>"
-
-                f"{bando['titolo']}<br>"
-
-                f"URL: {bando['url']}<br><br>"
-
-            )
-
-        return risultato
-
-    except Exception as e:
-
-        return f"ERRORE: {e}"
-
-
-@app.route("/dbtest", methods=["GET"])
-def dbtest():
-
-    conn = connessione_database()
-
-    if conn:
-
-        conn.close()
-
-        return (
-            "DATABASE OK - "
-            "Connessione a Neon riuscita"
-        )
-
-    return (
-        "DATABASE ERRORE - "
-        "Connessione a Neon fallita"
-    )
-
-
-@app.route("/dbinsert", methods=["GET"])
-def dbinsert():
-
-    conn = connessione_database()
-
-    if not conn:
-
-        return (
-            "DATABASE ERRORE - "
-            "Connessione fallita"
-        )
-
-    try:
-
-        cur = conn.cursor()
-
-        cur.execute(
-            """
-            INSERT INTO bandi (titolo, url, sito)
-            VALUES (%s, %s, %s)
-            """,
-            (
-                "TEST MONITORAGGIO FATTORIE",
-                "https://www.sviluppocampania.it/bandi",
-                "TEST"
-            )
-        )
-
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        return (
-            "OK - "
-            "Record di test inserito in Neon"
+        return jsonify(
+            {
+                "totale_bandi": len(bandi),
+                "bandi_rilevanti": len(rilevanti),
+                "risultati": rilevanti
+            }
         )
 
     except Exception as e:
 
-        conn.rollback()
-        conn.close()
+        return jsonify(
+            {
+                "errore": str(e)
+            }
+        ), 500
 
-        return f"ERRORE INSERIMENTO: {e}"
 
+# ============================================================
+# ROUTE VERIFICA FONTE
+# ============================================================
+
+@app.route("/verifica-fonte")
+def verifica_fonte():
+
+    risultato = verifica_integrita_fonte()
+
+    return jsonify(
+        risultato
+    )
+
+
+# ============================================================
+# AVVIO
+# ============================================================
 
 if __name__ == "__main__":
 
-    avvia_thread()
+    # Avvia il controllo automatico in background
+    thread_monitor = threading.Thread(
+        target=ciclo_controllo,
+        daemon=True
+    )
+
+    thread_monitor.start()
+
+    # Porta utilizzata da Render
+    port = int(
+        os.environ.get(
+            "PORT",
+            10000
+        )
+    )
 
     app.run(
         host="0.0.0.0",
-        port=10000
+        port=port
     )
