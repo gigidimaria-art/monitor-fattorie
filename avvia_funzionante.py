@@ -310,19 +310,15 @@ def verifica_integrita_fonte():
         # DEBUG 1 / DEBUG 2
         # ----------------------------------------------------
 
-        print(
-            "DEBUG 1 - prima della richiesta al sito"
-        )
-
-        response = requests.get(
-            URL_BANDI,
-            timeout=15,
-            headers={
-                "User-Agent":
-                    "Mozilla/5.0 "
-                    "Monitoraggio-Bandi-Campania"
-            }
-        )
+       response = requests.get(
+    URL_BANDI,
+    timeout=15,
+    headers={
+        "User-Agent":
+            "Mozilla/5.0 "
+            "Monitoraggio-Bandi-Campania"
+    }
+)
 
         print(
             f"DEBUG 2 - risposta ricevuta: "
