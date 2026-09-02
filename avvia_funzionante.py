@@ -545,70 +545,70 @@ def invia_messaggio(testo):
 
 def ciclo_controllo():
 
+    # Attende che Flask/Render abbia completato l'avvio
+    time.sleep(15)
+
     while True:
 
-        print(
-            "========================================"
-        )
+        print("========================================", flush=True)
+        print("CONTROLLO AUTOMATICO FONTE UFFICIALE", flush=True)
+        print("========================================", flush=True)
 
-        print(
-            "CONTROLLO AUTOMATICO FONTE UFFICIALE"
-        )
+        try:
 
-        print(
-            "========================================"
-        )
+            controllo = verifica_integrita_fonte()
 
-        controllo = verifica_integrita_fonte()
+            if controllo["ok"]:
 
-        if controllo["ok"]:
-
-            print(
-                "✅ FONTE OK"
-            )
-
-            print(
-                f"✅ Bandi estratti: "
-                f"{controllo['numero_bandi']}"
-            )
-
-            print(
-                f"✅ SRD03 Azione C: "
-                f"{controllo['srd03_trovato']}"
-            )
-
-        else:
-
-            print(
-                "🔴 ANOMALIA FONTE"
-            )
-
-            for anomalia in controllo[
-                "anomalie"
-            ]:
+                print("✅ FONTE OK", flush=True)
 
                 print(
-                    f"   ⚠️ {anomalia}"
+                    f"✅ Bandi estratti: "
+                    f"{controllo['numero_bandi']}",
+                    flush=True
                 )
-
-            if controllo[
-                "url_non_ufficiali"
-            ]:
 
                 print(
-                    "   URL non ufficiali:"
+                    f"✅ SRD03 Azione C: "
+                    f"{controllo['srd03_trovato']}",
+                    flush=True
                 )
 
-                for url in controllo[
-                    "url_non_ufficiali"
-                ]:
+            else:
+
+                print("🔴 ANOMALIA FONTE", flush=True)
+
+                for anomalia in controllo["anomalie"]:
 
                     print(
-                        f"      {url}"
+                        f"   ⚠️ {anomalia}",
+                        flush=True
                     )
 
+                if controllo["url_non_ufficiali"]:
+
+                    print(
+                        "   URL non ufficiali:",
+                        flush=True
+                    )
+
+                    for url in controllo["url_non_ufficiali"]:
+
+                        print(
+                            f"      {url}",
+                            flush=True
+                        )
+
+        except Exception as e:
+
+            print(
+                f"🔴 ERRORE CICLO AUTOMATICO: {e}",
+                flush=True
+            )
+
         print(
-            "Attesa 60 secondi..."
+            "Attesa 60 secondi...",
+            flush=True
         )
 
         time.sleep(60)
