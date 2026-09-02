@@ -207,13 +207,35 @@ def invia_messaggio(msg):
 
 def ciclo_controllo():
     while True:
-        print("Controllo nuovi bandi...")
-        nuovo = estrai_bando()
-        ultimo = leggi_ultimo_bando()
 
-        if nuovo and nuovo != ultimo:
-            salva_ultimo_bando(nuovo)
-            invia_messaggio(f"🔔 Nuovo bando rilevato!\n\n{nuovo}")
+        print("========================================")
+        print("CONTROLLO AUTOMATICO FONTE UFFICIALE")
+        print("========================================")
+
+        controllo = verifica_integrita_fonte()
+
+        if controllo["ok"]:
+
+            print("✅ FONTE OK")
+            print(
+                f"✅ Bandi estratti: {controllo['numero_bandi']}"
+            )
+            print(
+                f"✅ SRD03 Azione C: "
+                f"{controllo['srd03_trovato']}"
+            )
+
+        else:
+
+            print("🔴 ANOMALIA FONTE")
+
+            for anomalia in controllo["anomalie"]:
+                print(f"   ⚠️ {anomalia}")
+
+            if controllo["url_non_ufficiali"]:
+                print("   URL non ufficiali:")
+                for url in controllo["url_non_ufficiali"]:
+                    print(f"      {url}")
 
         time.sleep(60)
 
