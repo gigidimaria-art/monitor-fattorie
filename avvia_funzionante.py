@@ -248,13 +248,10 @@ def testbandi():
     if not risultati:
         return "NESSUN BANDO TROVATO"
 
-    risposta = ""
+    risposta = f"NUMERO BANDI ESTRATTI: {len(risultati)}\n\n"
 
     for bando in risultati:
-        rilevante = bando_rilevante(bando)
-
         risposta += (
-            f"RILEVANTE: {'SI' if rilevante else 'NO'}\n"
             f"Titolo: {bando['titolo']}\n"
             f"URL: {bando['url']}\n"
             f"Descrizione: {bando['descrizione']}\n"
