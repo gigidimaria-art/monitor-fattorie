@@ -377,18 +377,9 @@ def verifica_integrita_fonte():
         # DEBUG 3 / DEBUG 4
         # ----------------------------------------------------
 
-        print(
-            "DEBUG 3 - prima dell'estrazione dei bandi"
-        )
-
-        bandi = estrai_bandi_pagina(
-            URL_BANDI
-        )
-
-        print(
-            f"DEBUG 4 - bandi estratti: "
-            f"{len(bandi)}"
-        )
+       bandi = estrai_bandi_pagina(
+    URL_BANDI
+)
 
         risultato["numero_bandi"] = len(
             bandi
