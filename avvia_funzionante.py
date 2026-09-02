@@ -249,20 +249,26 @@ def testbandi():
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(r.text, "html.parser")
 
-        testo_pagina = soup.get_text(" ", strip=True)
+        risposta = ""
 
-        if "Intervento SRD03 Azione C" in testo_pagina:
-            risultato_srd03 = "SI"
-        else:
-            risultato_srd03 = "NO"
-
-        return (
-            f"SRD03 PRESENTE NELLA PAGINA: {risultato_srd03}\n"
-            f"NUMERO H1: {len(soup.find_all('h1'))}\n"
-            f"NUMERO H2: {len(soup.find_all('h2'))}\n"
-            f"NUMERO H3: {len(soup.find_all('h3'))}\n"
-            f"NUMERO LINK: {len(soup.find_all('a'))}\n"
+        elementi = soup.find_all(
+            string=lambda testo: testo and "SRD03" in testo.upper()
         )
+
+        if not elementi:
+            return "SRD03 NON TROVATO"
+
+        for elemento in elementi:
+            tag = elemento.parent
+
+            risposta += (
+                f"TAG: {tag.name}\n"
+                f"TESTO: {tag.get_text(' ', strip=True)}\n"
+                f"HTML: {str(tag)}\n"
+                f"========================================\n"
+            )
+
+        return risposta
 
     except Exception as e:
         return f"ERRORE: {e}"
