@@ -247,23 +247,27 @@ def testbandi():
         r.raise_for_status()
 
         from bs4 import BeautifulSoup
+
         soup = BeautifulSoup(r.text, "html.parser")
 
-        elementi = soup.find_all(
+        elemento = soup.find(
             string=lambda testo: testo and "SRD03" in testo.upper()
         )
 
-        if not elementi:
+        if not elemento:
             return "SRD03 NON TROVATO"
 
-        elemento = elementi[0]
-        contenitore = elemento.parent
+        riga = elemento.find_parent("tr")
 
-        for livello in range(5):
-            if contenitore.parent:
-                contenitore = contenitore.parent
+        if not riga:
+            return "RIGA NON TROVATA"
 
-        return str(contenitore)
+        link = riga.find("a", href=True)
+
+        if not link:
+            return "LINK NON TROVATO"
+
+        return f"HREF ORIGINALE: {link['href']}"
 
     except Exception as e:
         return f"ERRORE: {e}"
