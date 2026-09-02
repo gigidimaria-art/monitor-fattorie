@@ -249,8 +249,6 @@ def testbandi():
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(r.text, "html.parser")
 
-        risposta = ""
-
         elementi = soup.find_all(
             string=lambda testo: testo and "SRD03" in testo.upper()
         )
@@ -258,15 +256,29 @@ def testbandi():
         if not elementi:
             return "SRD03 NON TROVATO"
 
-        for elemento in elementi:
-            tag = elemento.parent
+        risposta = ""
 
-            risposta += (
-                f"TAG: {tag.name}\n"
-                f"TESTO: {tag.get_text(' ', strip=True)}\n"
-                f"HTML: {str(tag)}\n"
-                f"========================================\n"
-            )
+        for elemento in elementi:
+            corrente = elemento.parent
+
+            # Risali fino a trovare un link
+            link = corrente.find_parent("a")
+
+            if link:
+                risposta += (
+                    f"TAG TESTO: {corrente.name}\n"
+                    f"TESTO: {corrente.get_text(' ', strip=True)}\n"
+                    f"LINK: {link.get('href')}\n"
+                    f"HTML LINK: {str(link)}\n"
+                    f"========================================\n"
+                )
+            else:
+                risposta += (
+                    f"TAG TESTO: {corrente.name}\n"
+                    f"TESTO: {corrente.get_text(' ', strip=True)}\n"
+                    f"LINK: NESSUNO\n"
+                    f"========================================\n"
+                )
 
         return risposta
 
