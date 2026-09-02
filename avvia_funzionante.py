@@ -246,20 +246,16 @@ def testbandi():
         if not bandi:
             return "NESSUN BANDO TROVATO"
 
-        risultato = []
+        risultato = f"NUMERO BANDI TROVATI: {len(bandi)}<br><br>"
 
-        for bando in bandi:
-            if "SRD03" in bando["titolo"].upper():
-                risultato.append(
-                    f"Titolo: {bando['titolo']}<br>"
-                    f"Scadenza: {bando['descrizione']}<br>"
-                    f"URL: {bando['url']}<br><br>"
-                )
+        for i, bando in enumerate(bandi, start=1):
+            risultato += (
+                f"{i}. {bando['titolo']}<br>"
+                f"Scadenza: {bando['descrizione']}<br>"
+                f"URL: {bando['url']}<br><br>"
+            )
 
-        if not risultato:
-            return "SRD03 NON TROVATO"
-
-        return "".join(risultato)
+        return risultato
 
     except Exception as e:
         return f"ERRORE: {e}"
