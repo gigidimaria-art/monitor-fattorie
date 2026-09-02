@@ -246,12 +246,20 @@ def testbandi():
         if not bandi:
             return "NESSUN BANDO TROVATO"
 
-        risultato = f"NUMERO BANDI TROVATI: {len(bandi)}<br><br>"
+        risultato = "RISULTATO FILTRO DI RILEVANZA<br><br>"
 
         for i, bando in enumerate(bandi, start=1):
+
+            rilevante = bando_rilevante(bando)
+
+            if rilevante:
+                stato = "✅ RILEVANTE"
+            else:
+                stato = "❌ NON RILEVANTE"
+
             risultato += (
-                f"{i}. {bando['titolo']}<br>"
-                f"Scadenza: {bando['descrizione']}<br>"
+                f"{i}. {stato}<br>"
+                f"{bando['titolo']}<br>"
                 f"URL: {bando['url']}<br><br>"
             )
 
