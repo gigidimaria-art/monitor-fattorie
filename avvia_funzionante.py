@@ -101,6 +101,80 @@ def estrai_bandi_pagina(url):
     except Exception as e:
         print("Errore estrazione bandi:", e)
         return []
+def bando_rilevante(bando):
+    titolo = bando.get("titolo", "")
+    descrizione = bando.get("descrizione", "")
+
+    testo = f"{titolo} {descrizione}".lower()
+
+    # Normalizza trattini, slash e spazi
+    testo = testo.replace("-", " ")
+    testo = testo.replace("/", " ")
+    testo = " ".join(testo.split())
+
+    # 1. Fattoria/e didattica/e
+    if "fattoria didattica" in testo:
+        return True
+
+    if "fattorie didattiche" in testo:
+        return True
+
+    # 2. SRD03 + Azione C
+    # I due termini possono essere anche non consecutivi
+    if "srd03" in testo and "azione c" in testo:
+        return True
+
+    # 3. Termini generici
+    termini_generici = [
+        "agricoltura",
+        "agricolo",
+        "agricola",
+        "agricoli",
+        "agricole",
+        "azienda agricola",
+        "aziende agricole",
+        "imprenditore agricolo",
+        "imprenditori agricoli",
+        "attività agricola",
+        "attività agricole",
+        "settore agricolo",
+        "territorio rurale",
+        "area rurale",
+        "aree rurali",
+        "contributi alle aziende agricole"
+    ]
+
+    # 4. Termini qualificanti
+    termini_qualificanti = [
+        "didattica",
+        "didattico",
+        "didattiche",
+        "didattici",
+        "educativa",
+        "educativo",
+        "educative",
+        "educativi",
+        "attività didattiche",
+        "attività educative",
+        "attività educative didattiche",
+        "ludico didattico",
+        "ludico didattica",
+        "ludico didattiche",
+        "sviluppo delle aree rurali"
+    ]
+
+    contiene_generico = any(
+        termine in testo for termine in termini_generici
+    )
+
+    contiene_qualificante = any(
+        termine in testo for termine in termini_qualificanti
+    )
+
+    if contiene_generico and contiene_qualificante:
+        return True
+
+    return False
 
 def invia_messaggio(msg):
     global CHAT_ID
