@@ -299,9 +299,13 @@ print(f"DEBUG 2 - risposta ricevuta: HTTP {response.status_code}")
                 "Il contenuto della pagina non presenta sufficienti elementi attesi"
             )
 
-        bandi = estrai_bandi_pagina(URL_BANDI)
+       print("DEBUG 3 - prima dell'estrazione dei bandi")
 
-        risultato["numero_bandi"] = len(bandi)
+bandi = estrai_bandi_pagina(URL_BANDI)
+
+print(f"DEBUG 4 - bandi estratti: {len(bandi)}")
+
+risultato["numero_bandi"] = len(bandi)
 
         if not bandi:
 
