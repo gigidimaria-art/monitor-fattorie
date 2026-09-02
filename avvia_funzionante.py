@@ -112,20 +112,26 @@ def bando_rilevante(bando):
     testo = testo.replace("/", " ")
     testo = " ".join(testo.split())
 
-    # 1. Fattoria/e didattica/e
+    # =========================================================
+    # 1. CRITERI DIRETTI: sempre rilevanti
+    # =========================================================
+
     if "fattoria didattica" in testo:
         return True
 
     if "fattorie didattiche" in testo:
         return True
 
-    # 2. SRD03 + Azione C
+    # SRD03 + Azione C
     # I due termini possono essere anche non consecutivi
     if "srd03" in testo and "azione c" in testo:
         return True
 
-    # 3. Termini generici
-    termini_generici = [
+    # =========================================================
+    # 2. AZIENDA/AGRICOLTURA + ATTIVITÀ DIDATTICHE/EDUCATIVE
+    # =========================================================
+
+    termini_base_didattica = [
         "agricoltura",
         "agricolo",
         "agricola",
@@ -137,15 +143,10 @@ def bando_rilevante(bando):
         "imprenditori agricoli",
         "attività agricola",
         "attività agricole",
-        "settore agricolo",
-        "territorio rurale",
-        "area rurale",
-        "aree rurali",
-        "contributi alle aziende agricole"
+        "settore agricolo"
     ]
 
-    # 4. Termini qualificanti
-    termini_qualificanti = [
+    termini_didattici = [
         "didattica",
         "didattico",
         "didattiche",
@@ -154,24 +155,44 @@ def bando_rilevante(bando):
         "educativo",
         "educative",
         "educativi",
-        "attività didattiche",
         "attività educative",
+        "attività didattiche",
         "attività educative didattiche",
         "ludico didattico",
         "ludico didattica",
         "ludico didattiche",
-        "sviluppo delle aree rurali"
+        "ludico didattici"
     ]
 
-    contiene_generico = any(
-        termine in testo for termine in termini_generici
+    contiene_base = any(
+        termine in testo for termine in termini_base_didattica
     )
 
-    contiene_qualificante = any(
-        termine in testo for termine in termini_qualificanti
+    contiene_didattica = any(
+        termine in testo for termine in termini_didattici
     )
 
-    if contiene_generico and contiene_qualificante:
+    if contiene_base and contiene_didattica:
+        return True
+
+    # =========================================================
+    # 3. AZIENDE AGRICOLE + SVILUPPO DELLE AREE RURALI
+    # =========================================================
+
+    if "aziende agricole" in testo and "sviluppo delle aree rurali" in testo:
+        return True
+
+    if "azienda agricola" in testo and "sviluppo delle aree rurali" in testo:
+        return True
+
+    # =========================================================
+    # 4. AZIENDA AGRICOLA + FATTORIA
+    # =========================================================
+
+    if "azienda agricola" in testo and "fattoria" in testo:
+        return True
+
+    if "aziende agricole" in testo and "fattoria" in testo:
         return True
 
     return False
