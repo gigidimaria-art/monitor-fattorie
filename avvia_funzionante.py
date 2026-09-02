@@ -250,7 +250,7 @@ def testbandi():
 
     risposta = ""
 
-    for bando in risultati[:20]:
+    for bando in risultati:
         rilevante = bando_rilevante(bando)
 
         risposta += (
