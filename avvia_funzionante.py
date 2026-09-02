@@ -240,8 +240,6 @@ def avvia_thread():
     t.daemon = True
     t.start()
 
-@app.route("/testbandi", methods=["GET"])
-def testbandi():
     @app.route("/testbandi", methods=["GET"])
 def testbandi():
     risultati = estrai_bandi_pagina(URL_BANDI)
