@@ -242,7 +242,32 @@ def avvia_thread():
 
 @app.route("/testbandi", methods=["GET"])
 def testbandi():
-    for bando in risultati[:10]:
+    risultati = estrai_bandi_pagina(URL_BANDI)
+
+    if not risultati:
+        return "NESSUN BANDO TROVATO"
+
+    risultati_filtrati = [
+        bando for bando in risultati
+        if bando_rilevante(bando)
+    ]
+
+    if not risultati_filtrati:
+        return "NESSUN BANDO RILEVANTE TROVATO"
+
+    risposta = ""
+
+    for bando in risultati_filtrati:
+        risposta += (
+            f"Titolo: {bando['titolo']}\n"
+            f"URL: {bando['url']}\n"
+            f"Descrizione: {bando['descrizione']}\n"
+            f"---\n"
+        )
+
+    return risposta
+
+
 @app.route("/dbtest", methods=["GET"])
 def dbtest():
     conn = connessione_database()
