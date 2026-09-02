@@ -20,8 +20,7 @@ def connessione_database():
         return None
 
 URL_TELEGRAM = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-URL_BANDI = "https://www.sviluppocampania.it/bandi"
-
+URL_BANDI = "https://agricoltura.regione.campania.it/bandi.html"
 app = Flask(__name__)
 
 def salva_ultimo_bando(titolo):
