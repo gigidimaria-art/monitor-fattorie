@@ -306,28 +306,15 @@ def verifica_integrita_fonte():
 
     try:
 
-        # ----------------------------------------------------
-        # DEBUG 1 / DEBUG 2
-        # ----------------------------------------------------
-
-       response = requests.get(
-    URL_BANDI,
-    timeout=15,
-    headers={
-        "User-Agent":
-            "Mozilla/5.0 "
-            "Monitoraggio-Bandi-Campania"
-    }
-)
-
-        print(
-            f"DEBUG 2 - risposta ricevuta: "
-            f"HTTP {response.status_code}"
+        response = requests.get(
+            URL_BANDI,
+            timeout=15,
+            headers={
+                "User-Agent":
+                    "Mozilla/5.0 "
+                    "Monitoraggio-Bandi-Campania"
+            }
         )
-
-        # ----------------------------------------------------
-        # CONTROLLO HTTP
-        # ----------------------------------------------------
 
         if response.status_code != 200:
 
@@ -336,6 +323,157 @@ def verifica_integrita_fonte():
             )
 
             return risultato
+
+        if len(response.text) < 5000:
+
+            risultato["anomalie"].append(
+                "Pagina HTML insolitamente piccola"
+            )
+
+        testo = response.text.lower()
+
+        parole_attese = [
+            "bandi",
+            "srd",
+            "agricolt",
+            "csr"
+        ]
+
+        parole_presenti = [
+            parola
+            for parola in parole_attese
+            if parola in testo
+        ]
+
+        if len(parole_presenti) < 2:
+
+            risultato["anomalie"].append(
+                "Il contenuto della pagina non presenta "
+                "sufficienti elementi attesi"
+            )
+
+        bandi = estrai_bandi_pagina(
+            URL_BANDI
+        )
+
+        risultato["numero_bandi"] = len(
+            bandi
+        )
+
+        if not bandi:
+
+            risultato["anomalie"].append(
+                "Nessun bando estratto dalla pagina"
+            )
+
+            return risultato
+
+        dominio_ufficiale = (
+            "agricoltura.regione.campania.it"
+        )
+
+        for bando in bandi:
+
+            titolo = bando.get(
+                "titolo",
+                ""
+            ).strip()
+
+            url = bando.get(
+                "url",
+                ""
+            ).strip()
+
+            if not titolo:
+
+                risultato["anomalie"].append(
+                    "Trovato un elemento senza titolo"
+                )
+
+            if not url:
+
+                risultato["anomalie"].append(
+                    "Trovato un elemento senza URL"
+                )
+
+                continue
+
+            parsed = urlparse(url)
+
+            dominio = parsed.netloc.lower()
+
+            if dominio != dominio_ufficiale:
+
+                risultato[
+                    "url_non_ufficiali"
+                ].append(url)
+
+        if risultato[
+            "url_non_ufficiali"
+        ]:
+
+            risultato["anomalie"].append(
+                "Sono stati trovati URL non appartenenti "
+                "al dominio ufficiale"
+            )
+
+        for bando in bandi:
+
+            titolo = bando.get(
+                "titolo",
+                ""
+            )
+
+            descrizione = bando.get(
+                "descrizione",
+                ""
+            )
+
+            testo_bando = (
+                f"{titolo} {descrizione}"
+            ).lower()
+
+            testo_bando = testo_bando.replace(
+                "-",
+                " "
+            )
+
+            testo_bando = " ".join(
+                testo_bando.split()
+            )
+
+            if (
+                "srd03" in testo_bando
+                and "azione c" in testo_bando
+            ):
+
+                risultato[
+                    "srd03_trovato"
+                ] = True
+
+                break
+
+        if not risultato[
+            "srd03_trovato"
+        ]:
+
+            risultato["anomalie"].append(
+                "SRD03 - Azione C non trovato nella fonte"
+            )
+
+        if not risultato["anomalie"]:
+
+            risultato["ok"] = True
+
+        return risultato
+
+    except Exception as e:
+
+        risultato["anomalie"].append(
+            f"Errore durante il controllo della fonte: {e}"
+        )
+
+        return risultato
 
         # ----------------------------------------------------
         # CONTROLLO DIMENSIONE HTML
