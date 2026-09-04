@@ -1,6 +1,7 @@
 import os
 import time
 import threading
+import hashlib
 from urllib.parse import urljoin, urlparse
 
 import requests
