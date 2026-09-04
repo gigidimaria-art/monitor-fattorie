@@ -86,6 +86,108 @@ def inizializza_database():
         return False
 
 # ============================================================
+# SALVATAGGIO BANDI NEL DATABASE
+# ============================================================
+
+def salva_bandi_database(bandi):
+
+    conn = connessione_database()
+
+    if not conn:
+        return False
+
+    try:
+
+        cur = conn.cursor()
+
+        salvati = 0
+
+        for bando in bandi:
+
+            titolo = bando.get(
+                "titolo",
+                ""
+            ).strip()
+
+            url = bando.get(
+                "url",
+                ""
+            ).strip()
+
+            descrizione = bando.get(
+                "descrizione",
+                ""
+            ).strip()
+
+            if not titolo or not url:
+                continue
+
+            # Crea un'impronta del contenuto del bando
+            contenuto = (
+                f"{titolo}|{url}|{descrizione}"
+            )
+
+            impronta = hashlib.sha256(
+                contenuto.encode("utf-8")
+            ).hexdigest()
+
+            cur.execute(
+                """
+                INSERT INTO bandi_monitoraggio
+                (
+                    titolo,
+                    url,
+                    descrizione,
+                    impronta
+                )
+                VALUES (%s, %s, %s, %s)
+
+                ON CONFLICT (url)
+                DO UPDATE SET
+                    titolo = EXCLUDED.titolo,
+                    descrizione = EXCLUDED.descrizione,
+                    impronta = EXCLUDED.impronta,
+                    ultima_verifica = CURRENT_TIMESTAMP
+                """,
+                (
+                    titolo,
+                    url,
+                    descrizione,
+                    impronta
+                )
+            )
+
+            salvati += 1
+
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        print(
+            f"✅ Bandi salvati nel database: {salvati}",
+            flush=True
+        )
+
+        return True
+
+    except Exception as e:
+
+        print(
+            "Errore salvataggio bandi nel database:",
+            e,
+            flush=True
+        )
+
+        try:
+            conn.rollback()
+            conn.close()
+        except Exception:
+            pass
+
+        return False
+
+# ============================================================
 # ESTRAZIONE BANDI
 # ============================================================
 
