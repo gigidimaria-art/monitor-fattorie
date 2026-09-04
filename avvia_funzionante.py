@@ -655,6 +655,11 @@ def ciclo_controllo():
 
             if controllo["ok"]:
 
+            bandi = estrai_bandi_pagina(URL_BANDI)
+
+            if bandi:
+                salva_bandi_database(bandi)
+                
                 print("✅ FONTE OK", flush=True)
 
                 print(
