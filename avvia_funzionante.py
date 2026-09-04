@@ -100,7 +100,9 @@ def salva_bandi_database(bandi):
 
         cur = conn.cursor()
 
-        salvati = 0
+        nuovi = 0
+        invariati = 0
+        modificati = 0
 
         for bando in bandi:
 
@@ -122,42 +124,115 @@ def salva_bandi_database(bandi):
             if not titolo or not url:
                 continue
 
-            # Crea un'impronta del contenuto del bando
+            # Crea la nuova impronta del bando
             contenuto = (
                 f"{titolo}|{url}|{descrizione}"
             )
 
-            impronta = hashlib.sha256(
+            nuova_impronta = hashlib.sha256(
                 contenuto.encode("utf-8")
             ).hexdigest()
 
+            # Cerca se il bando esiste già
             cur.execute(
                 """
-                INSERT INTO bandi_monitoraggio
-                (
-                    titolo,
-                    url,
-                    descrizione,
-                    impronta
-                )
-                VALUES (%s, %s, %s, %s)
-
-                ON CONFLICT (url)
-                DO UPDATE SET
-                    titolo = EXCLUDED.titolo,
-                    descrizione = EXCLUDED.descrizione,
-                    impronta = EXCLUDED.impronta,
-                    ultima_verifica = CURRENT_TIMESTAMP
+                SELECT impronta
+                FROM bandi_monitoraggio
+                WHERE url = %s
                 """,
-                (
-                    titolo,
-                    url,
-                    descrizione,
-                    impronta
-                )
+                (url,)
             )
 
-            salvati += 1
+            risultato = cur.fetchone()
+
+            # ------------------------------------------------
+            # BANDO NUOVO
+            # ------------------------------------------------
+
+            if risultato is None:
+
+                cur.execute(
+                    """
+                    INSERT INTO bandi_monitoraggio
+                    (
+                        titolo,
+                        url,
+                        descrizione,
+                        impronta
+                    )
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (
+                        titolo,
+                        url,
+                        descrizione,
+                        nuova_impronta
+                    )
+                )
+
+                nuovi += 1
+
+                print(
+                    f"🆕 NUOVO BANDO: {titolo}",
+                    flush=True
+                )
+
+            else:
+
+                vecchia_impronta = risultato[0]
+
+                # --------------------------------------------
+                # BANDO INVARIATO
+                # --------------------------------------------
+
+                if vecchia_impronta == nuova_impronta:
+
+                    cur.execute(
+                        """
+                        UPDATE bandi_monitoraggio
+                        SET ultima_verifica = CURRENT_TIMESTAMP
+                        WHERE url = %s
+                        """,
+                        (url,)
+                    )
+
+                    invariati += 1
+
+                    print(
+                        f"✓ BANDO INVARIATO: {titolo}",
+                        flush=True
+                    )
+
+                # --------------------------------------------
+                # BANDO MODIFICATO
+                # --------------------------------------------
+
+                else:
+
+                    cur.execute(
+                        """
+                        UPDATE bandi_monitoraggio
+                        SET
+                            titolo = %s,
+                            descrizione = %s,
+                            impronta = %s,
+                            ultima_verifica = CURRENT_TIMESTAMP
+                        WHERE url = %s
+                        """,
+                        (
+                            titolo,
+                            descrizione,
+                            nuova_impronta,
+                            url
+                        )
+                    )
+
+                    modificati += 1
+
+                    print(
+                        f"🔄 BANDO MODIFICATO: {titolo}",
+                        flush=True
+                    )
 
         conn.commit()
 
@@ -165,7 +240,9 @@ def salva_bandi_database(bandi):
         conn.close()
 
         print(
-            f"✅ Bandi salvati nel database: {salvati}",
+            f"📊 Nuovi: {nuovi} | "
+            f"Invariati: {invariati} | "
+            f"Modificati: {modificati}",
             flush=True
         )
 
