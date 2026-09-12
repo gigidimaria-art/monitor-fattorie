@@ -177,6 +177,13 @@ def salva_bandi_database(bandi):
                     flush=True
                 )
 
+                if bando_rilevante(bando):
+
+                    print(
+                        f"🎯 BANDO RILEVANTE: {titolo}",
+                        flush=True
+                    )
+
             else:
 
                 vecchia_impronta = risultato[0]
@@ -233,6 +240,13 @@ def salva_bandi_database(bandi):
                         f"🔄 BANDO MODIFICATO: {titolo}",
                         flush=True
                     )
+
+                    if bando_rilevante(bando):
+
+                        print(
+                            f"🎯 BANDO RILEVANTE: {titolo}",
+                            flush=True
+                        )
 
         conn.commit()
 
