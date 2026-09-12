@@ -395,6 +395,7 @@ def estrai_bandi_pagina(url):
         return []
 
 
+```python
 # ============================================================
 # FILTRO BANDI RILEVANTI
 # ============================================================
@@ -408,15 +409,26 @@ def classifica_modifica(bando):
 
     # PROROGA + RETTIFICA
     if (
-        ("proroga" in testo or "prorogato" in testo or "prorogati" in testo)
+        (
+            "proroga" in testo
+            or "proroghe" in testo
+            or "prorogato" in testo
+            or "prorogati" in testo
+        )
         and
-        ("rettifica" in testo or "rettificato" in testo or "errata corrige" in testo)
+        (
+            "rettifica" in testo
+            or "rettifiche" in testo
+            or "rettificato" in testo
+            or "errata corrige" in testo
+        )
     ):
         return "PROROGA + RETTIFICA"
 
     # PROROGA
     if (
         "proroga" in testo
+        or "proroghe" in testo
         or "prorogato" in testo
         or "prorogati" in testo
     ):
@@ -425,6 +437,7 @@ def classifica_modifica(bando):
     # RETTIFICA
     if (
         "rettifica" in testo
+        or "rettifiche" in testo
         or "rettificato" in testo
         or "errata corrige" in testo
     ):
@@ -432,6 +445,8 @@ def classifica_modifica(bando):
 
     # ALTRA MODIFICA / AGGIORNAMENTO
     return "AGGIORNAMENTO/MODIFICA"
+```
+
 
 def bando_rilevante(bando):
 
