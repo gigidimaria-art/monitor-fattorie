@@ -228,7 +228,6 @@ def salva_bandi_database(bandi):
                         flush=True
                     )
 
-               ```python
                 # --------------------------------------------
                 # BANDO MODIFICATO
                 # --------------------------------------------
