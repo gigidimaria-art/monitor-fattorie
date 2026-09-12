@@ -10,6 +10,7 @@ from flask import Flask, jsonify
 from bs4 import BeautifulSoup
 
 
+
 # ============================================================
 # CONFIGURAZIONE
 # ============================================================
