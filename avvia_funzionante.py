@@ -261,17 +261,25 @@ def salva_bandi_database(bandi):
 
                     if bando_rilevante(bando):
 
-                        print(
-                            f"🎯 BANDO RILEVANTE: {titolo}",
-                            flush=True
-                        )
+    tipo_modifica = classifica_modifica(bando)
 
-                        invia_messaggio(
-                            f"🔄 BANDO RILEVANTE MODIFICATO\n\n"
-                            f"{titolo}\n\n"
-                            f"{descrizione}\n\n"
-                            f"{url}"
-                        )
+    print(
+        f"🎯 BANDO RILEVANTE: {titolo}",
+        flush=True
+    )
+
+    print(
+        f"🏷️ TIPO MODIFICA: {tipo_modifica}",
+        flush=True
+    )
+
+    invia_messaggio(
+        f"🔄 BANDO RILEVANTE MODIFICATO\n\n"
+        f"🏷️ Tipo modifica: {tipo_modifica}\n\n"
+        f"{titolo}\n\n"
+        f"{descrizione}\n\n"
+        f"{url}"
+    )
 
         conn.commit()
 
