@@ -940,57 +940,6 @@ def verifica_fonte():
     )
 
 # ============================================================
-# ROUTE TEST CLASSIFICAZIONE MODIFICHE
-# ============================================================
-
-@app.route("/test-classifica")
-def test_classifica():
-
-    casi = [
-        {
-            "nome": "PROROGA",
-            "titolo": "Bando SRD03 Azione C",
-            "descrizione": "Prorogato al 30/09/2026"
-        },
-        {
-            "nome": "RETTIFICA",
-            "titolo": "Bando SRD03 Azione C",
-            "descrizione": "Rettifica dell'avviso pubblico"
-        },
-        {
-            "nome": "PROROGA + RETTIFICA",
-            "titolo": "Bando SRD03 Azione C",
-            "descrizione": "Proroga dei termini e rettifica dell'avviso"
-        },
-        {
-            "nome": "AGGIORNAMENTO/MODIFICA",
-            "titolo": "Bando SRD03 Azione C",
-            "descrizione": "Aggiornamento delle informazioni"
-        }
-    ]
-
-    risultati = []
-
-    for caso in casi:
-
-        classificazione = classifica_modifica(caso)
-
-        risultati.append(
-            {
-                "caso": caso["nome"],
-                "classificazione": classificazione,
-                "corretto": classificazione == caso["nome"]
-            }
-        )
-
-    return jsonify(
-        {
-            "test": "classifica_modifica",
-            "risultati": risultati
-        }
-    )
-
-# ============================================================
 # AVVIO
 # ============================================================
 
