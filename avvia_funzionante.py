@@ -930,6 +930,7 @@ def test_bandi():
 # ============================================================
 
 @app.route("/verifica-fonte")
+/test-classifica
 def verifica_fonte():
 
     risultato = verifica_integrita_fonte()
