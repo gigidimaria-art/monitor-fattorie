@@ -418,6 +418,55 @@ def classifica_modifica(bando):
     # ALTRA MODIFICA / AGGIORNAMENTO
     return "AGGIORNAMENTO/MODIFICA"
 
+# TEST CLASSIFICAZIONE
+print("=== TEST CLASSIFICAZIONE ===", flush=True)
+
+test_proroga = {
+    "titolo": "Intervento SRD03 Azione C",
+    "descrizione": "prorogato al 30/09/2026 - ore 16:00"
+}
+
+test_rettifica = {
+    "titolo": "Rettifica del bando SRD03 Azione C",
+    "descrizione": "modifica delle disposizioni"
+}
+
+test_proroga_rettifica = {
+    "titolo": "Rettifica del bando ed ulteriore proroga dei termini",
+    "descrizione": "SRD03 Azione C"
+}
+
+test_aggiornamento = {
+    "titolo": "Aggiornamento del bando",
+    "descrizione": "nuove disposizioni"
+}
+
+print(
+    "TEST PROROGA:",
+    classifica_modifica(test_proroga),
+    flush=True
+)
+
+print(
+    "TEST RETTIFICA:",
+    classifica_modifica(test_rettifica),
+    flush=True
+)
+
+print(
+    "TEST PROROGA + RETTIFICA:",
+    classifica_modifica(test_proroga_rettifica),
+    flush=True
+)
+
+print(
+    "TEST AGGIORNAMENTO:",
+    classifica_modifica(test_aggiornamento),
+    flush=True
+)
+
+print("============================", flush=True)
+
 def bando_rilevante(bando):
 
     titolo = bando.get(
