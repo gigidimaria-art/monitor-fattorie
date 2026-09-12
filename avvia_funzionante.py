@@ -181,7 +181,7 @@ def salva_bandi_database(bandi):
                     flush=True
                 )
 
-                                if bando_rilevante(bando):
+                if bando_rilevante(bando):
 
                     tipo_modifica = classifica_modifica(bando)
 
