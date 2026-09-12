@@ -133,6 +133,10 @@ def salva_bandi_database(bandi):
                 contenuto.encode("utf-8")
             ).hexdigest()
 
+if "SRD03.html" in url:
+    print(f"🔎 DEBUG SRD03 - URL: {url}", flush=True)
+    print(f"🔎 DEBUG SRD03 - NUOVA IMPRONTA: {nuova_impronta}", flush=True)
+            
             # Cerca se il bando esiste già
             cur.execute(
                 """
