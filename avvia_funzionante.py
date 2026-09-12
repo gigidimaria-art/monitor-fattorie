@@ -181,19 +181,19 @@ def salva_bandi_database(bandi):
                     flush=True
                 )
 
-                if bando_rilevante(bando):
+                                if bando_rilevante(bando):
 
-    print(
-        f"🎯 NUOVO BANDO RILEVANTE: {titolo}",
-        flush=True
-    )
+                    print(
+                        f"🎯 NUOVO BANDO RILEVANTE: {titolo}",
+                        flush=True
+                    )
 
-    invia_messaggio(
-        f"🆕 NUOVO BANDO RILEVANTE\n\n"
-        f"{titolo}\n\n"
-        f"{descrizione}\n\n"
-        f"{url}"
-    )
+                    invia_messaggio(
+                        f"🆕 NUOVO BANDO RILEVANTE\n\n"
+                        f"{titolo}\n\n"
+                        f"{descrizione}\n\n"
+                        f"{url}"
+                    )
             else:
 
                 vecchia_impronta = risultato[0]
