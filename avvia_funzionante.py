@@ -445,61 +445,6 @@ def classifica_modifica(bando):
     # ALTRA MODIFICA / AGGIORNAMENTO
     return "AGGIORNAMENTO/MODIFICA"
 
-
-# ============================================================
-# TEST CLASSIFICAZIONE MODIFICHE
-# ============================================================
-
-def test_classifica_modifica():
-
-    casi = [
-        {
-            "nome": "PROROGA",
-            "titolo": "Bando prorogato",
-            "descrizione": ""
-        },
-        {
-            "nome": "PROROGHE",
-            "titolo": "Proroghe dei termini",
-            "descrizione": ""
-        },
-        {
-            "nome": "RETTIFICA",
-            "titolo": "Rettifica del bando",
-            "descrizione": ""
-        },
-        {
-            "nome": "RETTIFICHE",
-            "titolo": "Rettifiche al bando",
-            "descrizione": ""
-        },
-        {
-            "nome": "PROROGA + RETTIFICA",
-            "titolo": "Bando prorogato con rettifica",
-            "descrizione": ""
-        },
-        {
-            "nome": "AGGIORNAMENTO/MODIFICA",
-            "titolo": "Aggiornamento del bando",
-            "descrizione": ""
-        }
-    ]
-
-    risultati = []
-
-    for caso in casi:
-
-        risultato = classifica_modifica(caso)
-
-        risultati.append(
-            {
-                "caso": caso["nome"],
-                "classificazione": risultato
-            }
-        )
-
-    return risultati
-
 def bando_rilevante(bando):
 
     titolo = bando.get(
