@@ -446,7 +446,6 @@ def classifica_modifica(bando):
     # ALTRA MODIFICA / AGGIORNAMENTO
     return "AGGIORNAMENTO/MODIFICA"
 
-```python
 # ============================================================
 # TEST CLASSIFICAZIONE MODIFICHE
 # ============================================================
