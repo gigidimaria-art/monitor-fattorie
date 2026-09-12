@@ -179,10 +179,17 @@ def salva_bandi_database(bandi):
 
                 if bando_rilevante(bando):
 
-                    print(
-                        f"🎯 BANDO RILEVANTE: {titolo}",
-                        flush=True
-                    )
+    print(
+        f"🎯 BANDO RILEVANTE: {titolo}",
+        flush=True
+    )
+
+    invia_messaggio(
+        f"🆕 NUOVO BANDO RILEVANTE\n\n"
+        f"{titolo}\n\n"
+        f"{descrizione}\n\n"
+        f"{url}"
+    )
 
             else:
 
