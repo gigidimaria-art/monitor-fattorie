@@ -605,7 +605,7 @@ def salva_bandi_database(bandi):
                             f"{descrizione}\n\n"
                             f"{url}"
                         )
-conn.commit()
+        conn.commit()
 
         cur.close()
         conn.close()
